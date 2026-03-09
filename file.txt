@@ -1,15 +1,33 @@
 @startuml
-class Dummy {
--field1
-#field2
-~method1()
-+method2()
+
+class Utilisateur {
+-id: int
+-nom: String
+-email: String
++seConnecter()
++seDeconnecter()
 }
 
-class Test {
--field1
--field2
--field3
-+method()
+class Commande {
+-id: int
+-date: Date
+-statut: String
++calculerTotal()
 }
+
+class Produit {
+-id: int
+-nom: String
+-prix: float
+}
+
+class LigneCommande {
+-quantite: int
++calculerSousTotal(int) : String
+}
+
+Utilisateur "1" -- "0..*" Commande : passe
+Commande "1" -- "1..*" LigneCommande
+Produit "1" -- "0..*" LigneCommande
+
 @enduml

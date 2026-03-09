@@ -6,68 +6,82 @@ const lines = content.split(/\r?\n/);
 
 let output = "";
 
-if (lines[0].match("@startuml"))
-{
+if (lines[0].match("@startuml")) {
     const space = "    ";
     
     console.log("PlantUML");
-    output = "classDiagram\n"
-    lines.shift();
-    let classNameCount = lines.join().split("class").length -1;
-    console.log(classNameCount);
-
-    for(let i = 0; i < classNameCount; i++)
-    {
-        const attributs = [];
-        const methods = [];
-
-        let className = lines[0].substring(0, lines[0].search("{") -1);
-        console.log(className);
-        output += className + " {\n"
-        lines.shift();
-
-        for(const line of lines)
-        {
-            if (!line.endsWith("()"))
-            {
-                console.log(line);
-                attributs.push(line);
-                output += space + line + "\n";
-            }
-            else break;
+    output = "classDiagram\n";
+    
+    /*
+     This code search the class name
+     */
+    const classNameArray = [];
+    const classNameLineArray: number[] = [];
+    let lastClassLine = 0;
+    let i = 0;
+    for(const line of lines) {
+        let tempSearch = line.search("class");
+        
+        if (tempSearch == 0) {
+            classNameArray.push(line.substring(6, line.search("{")-1));
+            classNameLineArray.push(i);
         }
-
-        for (let i = 0; i < attributs.length; i++)
-        {   
-            lines.shift();
-        }
-
-        for(const line of lines)
-        {
-            if (!line.endsWith("}"))
-            {
-                console.log(line);
-                methods.push(line);
-                output += space + line + "\n";
-            }
-            else break;
-        }
-
-        for (let i = 0; i < methods.length; i++)
-        {   
-            lines.shift();
-        }
-
-        output += "}\n";
-        lines.shift();
-        lines.shift();
+        i++;
     }
-    console.log(output);
-    fs.writeFileSync("output.txt", output);
+    console.log(classNameArray, classNameLineArray);
+ 
+    /*
+    This code get attributs & methods of each class
+    */
+    for(let i = 0; i < classNameArray.length; i++) {
+        const classContent = [];
+        const attributsArray = [];
+        const methodsArray = [];
 
+        let tempLines = lines.slice(classNameLineArray[i]);
+        for(const line of tempLines) {
+            classContent.push(line)
+            if(!line.includes("class")) {
+                if(!line.includes("{")) {
+                    if (!line.includes("(")) {
+                        if (!line.includes("}")) {
+                            attributsArray.push(line);
+                        }
+                    }
+                }
+            }
+            if(line.includes("(")) methodsArray.push(line);
+            if(i > classNameLineArray.length -2)
+            {
+                lastClassLine = classNameLineArray[i];
+            }
+            if(line.search("}") == 0) break;
+
+        }
+
+        if(attributsArray.length == 0) { 
+            console.log("Class Content : " + classContent + "\nMethods : " + methodsArray + "\n");
+        }
+        else if (methodsArray.length == 0) {
+            console.log("Class Content : " + classContent + "\nAttributs : " + attributsArray + "\n");
+        }
+        else {
+            console.log("Class Content : " + classContent + "\nAttributs : " + attributsArray + "\nMethods : " + methodsArray + "\n");
+        }
+    }
+
+    /*
+    Relation
+    */
+    for(let i = 0; i < classNameArray.length; i++) {
+        let tempLines = lines.slice(classNameLineArray[i]);
+        //console.log(tempLines);
+    }
+
+    //console.log(output);
+    //fs.writeFileSync("output.txt", output);
 
 }
-else if (lines[0].match("classDiagram"))
-{
+else if (lines[0].match("classDiagram")) {
     console.log("Mermaid");
 }

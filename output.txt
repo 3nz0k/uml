@@ -5,6 +5,7 @@ class Dummy {
     ~method1()
     +method2()
 }
+
 class Test {
     -field1
     -field2
