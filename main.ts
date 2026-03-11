@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import * as fs from "fs";
 
 const filePath = 'file.txt';
 const content = fs.readFileSync(filePath, 'utf-8');
@@ -59,7 +59,7 @@ if (lines[0].match("@startuml")) {
 
         }
 
-        if(attributsArray.length == 0) { 
+        /*if(attributsArray.length == 0) { 
             console.log("Class Content : " + classContent + "\nMethods : " + methodsArray + "\n");
         }
         else if (methodsArray.length == 0) {
@@ -67,21 +67,54 @@ if (lines[0].match("@startuml")) {
         }
         else {
             console.log("Class Content : " + classContent + "\nAttributs : " + attributsArray + "\nMethods : " + methodsArray + "\n");
-        }
+        }*/
     }
 
     /*
     Relation
     */
-    for(let i = 0; i < classNameArray.length; i++) {
-        let tempLines = lines.slice(classNameLineArray[i]);
-        //console.log(tempLines);
+    let tempLines:string[] = lines.slice(classNameLineArray[classNameArray.length-1]);
+    let index = 0;
+    const relationList = [];
+    for(const line of tempLines)
+    {
+        if(line.search("}") == 0)
+        {
+            index += 1;
+            break;
+        }
+        index += 1;
     }
 
-    //console.log(output);
+    tempLines = tempLines.slice(index);
+
+    if(tempLines[0] == "")
+    {
+        tempLines = tempLines.slice(1);
+    }
+
+    let relationArray: string[][] = [];
+    for (const line of tempLines)
+    {
+        if (line == "@enduml") break;
+        else if(line != "")
+        {
+            relationList.push(line);
+            relationArray.push(line.split("\""));
+        }
+    }
+
+    for(let i = 0; i < relationArray.length; i++ )
+    {
+        for(let j = 0; j < relationArray[i].length; j++)
+        { 
+            console.log(relationArray[i][j].trim());
+        }
+    }
+
+    //console.log(relationList);
     //fs.writeFileSync("output.txt", output);
 
-}
-else if (lines[0].match("classDiagram")) {
+} else if (lines[0].match("classDiagram")) {
     console.log("Mermaid");
 }

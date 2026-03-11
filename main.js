@@ -33,8 +33,8 @@ if (lines[0].match("@startuml")) {
         var classContent = [];
         var attributsArray = [];
         var methodsArray = [];
-        var tempLines = lines.slice(classNameLineArray[i_1]);
-        for (var _a = 0, tempLines_1 = tempLines; _a < tempLines_1.length; _a++) {
+        var tempLines_4 = lines.slice(classNameLineArray[i_1]);
+        for (var _a = 0, tempLines_1 = tempLines_4; _a < tempLines_1.length; _a++) {
             var line = tempLines_1[_a];
             classContent.push(line);
             if (!line.includes("class")) {
@@ -49,12 +49,12 @@ if (lines[0].match("@startuml")) {
             if (line.includes("("))
                 methodsArray.push(line);
             if (i_1 > classNameLineArray.length - 2) {
-                console.log(classNameLineArray[i_1]);
+                lastClassLine = classNameLineArray[i_1];
             }
             if (line.search("}") == 0)
                 break;
         }
-        if (attributsArray.length == 0) {
+        /*if(attributsArray.length == 0) {
             console.log("Class Content : " + classContent + "\nMethods : " + methodsArray + "\n");
         }
         else if (methodsArray.length == 0) {
@@ -62,16 +62,42 @@ if (lines[0].match("@startuml")) {
         }
         else {
             console.log("Class Content : " + classContent + "\nAttributs : " + attributsArray + "\nMethods : " + methodsArray + "\n");
-        }
+        }*/
     }
     /*
     Relation
     */
-    for (var i_2 = 0; i_2 < classNameArray.length; i_2++) {
-        var tempLines = lines.slice(classNameLineArray[i_2]);
-        //console.log(tempLines);
+    var tempLines = lines.slice(classNameLineArray[classNameArray.length - 1]);
+    var index = 0;
+    var relationList = [];
+    for (var _b = 0, tempLines_2 = tempLines; _b < tempLines_2.length; _b++) {
+        var line = tempLines_2[_b];
+        if (line.search("}") == 0) {
+            index += 1;
+            break;
+        }
+        index += 1;
     }
-    //console.log(output);
+    tempLines = tempLines.slice(index);
+    if (tempLines[0] == "") {
+        tempLines = tempLines.slice(1);
+    }
+    var a = [];
+    for (var _c = 0, tempLines_3 = tempLines; _c < tempLines_3.length; _c++) {
+        var line = tempLines_3[_c];
+        if (line == "@enduml")
+            break;
+        else if (line != "") {
+            relationList.push(line);
+            a.push(line.split("\""));
+        }
+    }
+    for (var i_2 = 0; i_2 < a.length; i_2++) {
+        for (var j = 0; j < a[i_2].length; j++) {
+            console.log(a[i_2][j].trim());
+        }
+    }
+    //console.log(relationList);
     //fs.writeFileSync("output.txt", output);
 }
 else if (lines[0].match("classDiagram")) {
