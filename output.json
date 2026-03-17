@@ -1,0 +1,117 @@
+[
+  {
+    "name": "Utilisateur",
+    "attributes": [
+      {
+        "visibility": "-",
+        "name": "id",
+        "type": "int"
+      },
+      {
+        "visibility": "-",
+        "name": "nom",
+        "type": "String"
+      },
+      {
+        "visibility": "-",
+        "name": "email",
+        "type": "String"
+      }
+    ],
+    "methods": [
+      {
+        "visibility": "+",
+        "name": "seConnecter",
+        "parameters": [],
+        "returnType": "void"
+      },
+      {
+        "visibility": "+",
+        "name": "seDeconnecter",
+        "parameters": [],
+        "returnType": "void"
+      }
+    ]
+  },
+  {
+    "name": "Commande",
+    "attributes": [
+      {
+        "visibility": "-",
+        "name": "id",
+        "type": "int"
+      },
+      {
+        "visibility": "-",
+        "name": "date",
+        "type": "Date"
+      },
+      {
+        "visibility": "-",
+        "name": "statut",
+        "type": "String"
+      }
+    ],
+    "methods": [
+      {
+        "visibility": "+",
+        "name": "calculerTotal",
+        "parameters": [
+          {
+            "type": "int",
+            "name": "a"
+          },
+          {
+            "type": "int",
+            "name": "b"
+          }
+        ],
+        "returnType": "int"
+      }
+    ]
+  },
+  {
+    "name": "Produit",
+    "attributes": [
+      {
+        "visibility": "-",
+        "name": "id",
+        "type": "int"
+      },
+      {
+        "visibility": "-",
+        "name": "nom",
+        "type": "String"
+      },
+      {
+        "visibility": "-",
+        "name": "prix",
+        "type": "float"
+      }
+    ],
+    "methods": []
+  },
+  {
+    "name": "LigneCommande",
+    "attributes": [
+      {
+        "visibility": "-",
+        "name": "quantite",
+        "type": "int"
+      }
+    ],
+    "methods": [
+      {
+        "visibility": "+",
+        "name": "calculerSousTotal",
+        "parameters": [
+          {
+            "type": "int",
+            "name": ""
+          }
+        ],
+        "returnType": "int"
+      }
+    ]
+  }
+]

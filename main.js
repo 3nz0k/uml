@@ -3,103 +3,95 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require("fs");
 var filePath = 'file.txt';
 var content = fs.readFileSync(filePath, 'utf-8');
-var lines = content.split(/\r?\n/);
 var output = "";
-if (lines[0].match("@startuml")) {
-    var space = "    ";
-    console.log("PlantUML");
-    output = "classDiagram\n";
-    /*
-     This code search the class name
-     */
+var classes = [];
+/*
+This code search the class name
+*/
+function getClassName(content) {
     var classNameArray = [];
-    var classNameLineArray = [];
-    var lastClassLine = 0;
-    var i = 0;
-    for (var _i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
-        var line = lines_1[_i];
-        var tempSearch = line.search("class");
-        if (tempSearch == 0) {
-            classNameArray.push(line.substring(6, line.search("{") - 1));
-            classNameLineArray.push(i);
-        }
-        i++;
+    var regex = /class (\w+)/g;
+    var classNames = Array.from(content.matchAll(regex));
+    for (var _i = 0, classNames_1 = classNames; _i < classNames_1.length; _i++) {
+        var classname = classNames_1[_i];
+        classes.push({
+            name: classname[1],
+            attributes: [],
+            methods: []
+        });
+        classNameArray.push(classname[1]);
     }
-    console.log(classNameArray, classNameLineArray);
-    /*
-    This code get attributs & methods of each class
-    */
-    for (var i_1 = 0; i_1 < classNameArray.length; i_1++) {
-        var classContent = [];
+    return classNameArray;
+}
+/*
+This code search the content class
+*/
+function getClassContent(content, classNames) {
+    var classNameContentArray = [];
+    var regex = /{([\s\S]*?)}/;
+    for (var i = 0; i < classNames.length; i++) {
+        classNameContentArray.push(content.slice(content.search(classNames[i])).split(regex)[1]);
+    }
+    return classNameContentArray;
+}
+function getAttributs(content) {
+    var regex = /([-#+])(\w*)(\s*:\s*)(\w*)/g;
+    for (var line in content) {
+        var attributs = Array.from(content[line].matchAll(regex));
         var attributsArray = [];
+        for (var _i = 0, attributs_1 = attributs; _i < attributs_1.length; _i++) {
+            var attribut = attributs_1[_i];
+            attributsArray.push({
+                visibility: attribut[1],
+                name: attribut[2],
+                type: attribut[4]
+            });
+        }
+        classes[line].attributes = attributsArray;
+    }
+}
+function getMethods(content) {
+    var regex = /([-+])(\w+)\(([^)]*)\)\s*(?::\s*(\w+))?/g;
+    for (var i = 0; i < content.length; i++) {
+        var matches = Array.from(content[i].matchAll(regex));
         var methodsArray = [];
-        var tempLines_4 = lines.slice(classNameLineArray[i_1]);
-        for (var _a = 0, tempLines_1 = tempLines_4; _a < tempLines_1.length; _a++) {
-            var line = tempLines_1[_a];
-            classContent.push(line);
-            if (!line.includes("class")) {
-                if (!line.includes("{")) {
-                    if (!line.includes("(")) {
-                        if (!line.includes("}")) {
-                            attributsArray.push(line);
-                        }
-                    }
-                }
-            }
-            if (line.includes("("))
-                methodsArray.push(line);
-            if (i_1 > classNameLineArray.length - 2) {
-                lastClassLine = classNameLineArray[i_1];
-            }
-            if (line.search("}") == 0)
-                break;
+        for (var _i = 0, matches_1 = matches; _i < matches_1.length; _i++) {
+            var m = matches_1[_i];
+            methodsArray.push({
+                visibility: m[1],
+                name: m[2],
+                parameters: parseParameters(m[3]),
+                returnType: m[4] || null
+            });
+            parseParameters(m[3]);
         }
-        /*if(attributsArray.length == 0) {
-            console.log("Class Content : " + classContent + "\nMethods : " + methodsArray + "\n");
-        }
-        else if (methodsArray.length == 0) {
-            console.log("Class Content : " + classContent + "\nAttributs : " + attributsArray + "\n");
-        }
-        else {
-            console.log("Class Content : " + classContent + "\nAttributs : " + attributsArray + "\nMethods : " + methodsArray + "\n");
-        }*/
+        classes[i].methods = methodsArray;
     }
-    /*
-    Relation
-    */
-    var tempLines = lines.slice(classNameLineArray[classNameArray.length - 1]);
-    var index = 0;
-    var relationList = [];
-    for (var _b = 0, tempLines_2 = tempLines; _b < tempLines_2.length; _b++) {
-        var line = tempLines_2[_b];
-        if (line.search("}") == 0) {
-            index += 1;
-            break;
-        }
-        index += 1;
-    }
-    tempLines = tempLines.slice(index);
-    if (tempLines[0] == "") {
-        tempLines = tempLines.slice(1);
-    }
-    var a = [];
-    for (var _c = 0, tempLines_3 = tempLines; _c < tempLines_3.length; _c++) {
-        var line = tempLines_3[_c];
-        if (line == "@enduml")
-            break;
-        else if (line != "") {
-            relationList.push(line);
-            a.push(line.split("\""));
-        }
-    }
-    for (var i_2 = 0; i_2 < a.length; i_2++) {
-        for (var j = 0; j < a[i_2].length; j++) {
-            console.log(a[i_2][j].trim());
-        }
-    }
-    //console.log(relationList);
-    //fs.writeFileSync("output.txt", output);
 }
-else if (lines[0].match("classDiagram")) {
-    console.log("Mermaid");
+function parseParameters(parameters) {
+    var params;
+    var parameter = [];
+    if (parameters == "")
+        return [];
+    params = parameters.split(",");
+    params.forEach(function (element) {
+        element = element.trim();
+        if (element != "") {
+            params = element.split(" ");
+            parameter.push({
+                type: params[0],
+                name: params[1] || ""
+            });
+        }
+    });
+    return parameter;
 }
+var classNameArray = getClassName(content);
+var classContent = getClassContent(content, classNameArray);
+getAttributs(classContent);
+getMethods(classContent);
+console.log();
+fs.writeFileSync("output.json", JSON.stringify(classes, null, 2));
+//console.log(classNameArray);
+//console.log(attributs[0]);
+//console.log(methods);

@@ -4,15 +4,15 @@ class Utilisateur {
 -id: int
 -nom: String
 -email: String
-+seConnecter()
-+seDeconnecter()
++seConnecter() : void
++seDeconnecter() : void
 }
 
 class Commande {
 -id: int
 -date: Date
 -statut: String
-+calculerTotal()
++calculerTotal(int a, int b) : int
 }
 
 class Produit {
@@ -23,7 +23,7 @@ class Produit {
 
 class LigneCommande {
 -quantite: int
-+calculerSousTotal(int) : String
++calculerSousTotal(int) : int
 }
 
 Utilisateur "1" -- "0..*" Commande : passe

@@ -1,120 +1,137 @@
 import * as fs from "fs";
 
 const filePath = 'file.txt';
-const content = fs.readFileSync(filePath, 'utf-8');
-const lines = content.split(/\r?\n/);
-
+const content:string = fs.readFileSync(filePath, 'utf-8');
 let output = "";
 
-if (lines[0].match("@startuml")) {
-    const space = "    ";
-    
-    console.log("PlantUML");
-    output = "classDiagram\n";
-    
-    /*
-     This code search the class name
-     */
-    const classNameArray = [];
-    const classNameLineArray: number[] = [];
-    let lastClassLine = 0;
-    let i = 0;
-    for(const line of lines) {
-        let tempSearch = line.search("class");
-        
-        if (tempSearch == 0) {
-            classNameArray.push(line.substring(6, line.search("{")-1));
-            classNameLineArray.push(i);
-        }
-        i++;
-    }
-    console.log(classNameArray, classNameLineArray);
- 
-    /*
-    This code get attributs & methods of each class
-    */
-    for(let i = 0; i < classNameArray.length; i++) {
-        const classContent = [];
-        const attributsArray = [];
-        const methodsArray = [];
-
-        let tempLines = lines.slice(classNameLineArray[i]);
-        for(const line of tempLines) {
-            classContent.push(line)
-            if(!line.includes("class")) {
-                if(!line.includes("{")) {
-                    if (!line.includes("(")) {
-                        if (!line.includes("}")) {
-                            attributsArray.push(line);
-                        }
-                    }
-                }
-            }
-            if(line.includes("(")) methodsArray.push(line);
-            if(i > classNameLineArray.length -2)
-            {
-                lastClassLine = classNameLineArray[i];
-            }
-            if(line.search("}") == 0) break;
-
-        }
-
-        /*if(attributsArray.length == 0) { 
-            console.log("Class Content : " + classContent + "\nMethods : " + methodsArray + "\n");
-        }
-        else if (methodsArray.length == 0) {
-            console.log("Class Content : " + classContent + "\nAttributs : " + attributsArray + "\n");
-        }
-        else {
-            console.log("Class Content : " + classContent + "\nAttributs : " + attributsArray + "\nMethods : " + methodsArray + "\n");
-        }*/
-    }
-
-    /*
-    Relation
-    */
-    let tempLines:string[] = lines.slice(classNameLineArray[classNameArray.length-1]);
-    let index = 0;
-    const relationList = [];
-    for(const line of tempLines)
-    {
-        if(line.search("}") == 0)
-        {
-            index += 1;
-            break;
-        }
-        index += 1;
-    }
-
-    tempLines = tempLines.slice(index);
-
-    if(tempLines[0] == "")
-    {
-        tempLines = tempLines.slice(1);
-    }
-
-    let relationArray: string[][] = [];
-    for (const line of tempLines)
-    {
-        if (line == "@enduml") break;
-        else if(line != "")
-        {
-            relationList.push(line);
-            relationArray.push(line.split("\""));
-        }
-    }
-
-    for(let i = 0; i < relationArray.length; i++ )
-    {
-        for(let j = 0; j < relationArray[i].length; j++)
-        { 
-            console.log(relationArray[i][j].trim());
-        }
-    }
-
-    //console.log(relationList);
-    //fs.writeFileSync("output.txt", output);
-
-} else if (lines[0].match("classDiagram")) {
-    console.log("Mermaid");
+interface oneClass {
+    name: string;
+    attributes: attribute[];
+    methods: method[];
 }
+
+interface attribute {
+    visibility: string;
+    name: string;
+    type: string;
+}
+
+interface method {
+    visibility: string;
+    name: string;
+    parameters: parameter[];
+    returnType: string | null;
+}
+
+interface parameter {
+    type: string;
+    name: string;
+}
+
+let classes:oneClass[] = [];
+
+/*
+This code search the class name
+*/
+function getClassName(content:string) 
+{
+    const classNameArray:string[] = [];
+    const regex = /class (\w+)/g;
+    const classNames = Array.from(content.matchAll(regex));
+
+    for(const classname of classNames) {
+        classes.push({
+            name: classname[1],
+            attributes : [],
+            methods: []
+        });
+        classNameArray.push(classname[1]);
+    }
+    return classNameArray;
+}
+
+/*
+This code search the content class
+*/
+function getClassContent(content:string, classNames:string[])
+{
+    const classNameContentArray:string[] = [];
+    const regex = /{([\s\S]*?)}/;
+
+    for(let i = 0; i < classNames.length; i++)
+    {
+        classNameContentArray.push(content.slice(content.search(classNames[i])).split(regex)[1]);
+    }
+
+    return classNameContentArray;
+}
+
+function getAttributs(content:string[])
+{
+    const regex = /([-#+])(\w*)(\s*:\s*)(\w*)/g;
+    for(const line in content) {
+        let attributs = Array.from(content[line].matchAll(regex));
+        let attributsArray:attribute[] = [];
+        for(const attribut of attributs) {
+            attributsArray.push({
+                visibility: attribut[1],
+                name: attribut[2],
+                type: attribut[4]
+            });
+        }
+
+        classes[line].attributes = attributsArray;
+    }
+}
+
+function getMethods(content: string[]) {
+    const regex = /([-+])(\w+)\(([^)]*)\)\s*(?::\s*(\w+))?/g;
+
+    for (let i = 0; i < content.length; i++) {
+        const matches = Array.from(content[i].matchAll(regex));
+        const methodsArray: method[] = [];
+
+        for (const m of matches) {
+            methodsArray.push({
+                visibility: m[1],
+                name: m[2],
+                parameters: parseParameters(m[3]),
+                returnType: m[4] || null
+            });
+            parseParameters(m[3]);
+        }
+
+        classes[i].methods = methodsArray;
+    }
+}
+
+function parseParameters(parameters:string) : parameter[]
+{
+    let params:string[];
+    let parameter:parameter[] = [];
+
+    if(parameters == "") return [];
+    params = parameters.split(",");
+    params.forEach(element => {
+        element = element.trim();
+        if(element != "")
+        {
+            params = element.split(" ");
+            parameter.push({
+                type: params[0],
+                name: params[1] || ""
+            });
+        }
+    })
+    return parameter;
+}
+
+const classNameArray = getClassName(content);
+const classContent = getClassContent(content, classNameArray);
+getAttributs(classContent);
+getMethods(classContent);
+console.log();
+fs.writeFileSync("output.json", JSON.stringify(classes, null, 2));
+//console.log(classNameArray);
+//console.log(attributs[0]);
+//console.log(methods);
